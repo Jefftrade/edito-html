@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Pro Editor</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closetag.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/xml-hint.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --dark-bg: #1e1e1e;
+            --header-bg: #252526;
+            --pane-border: #333333;
+            --text-light: #cccccc;
+            --text-dark: #888888;
+            --accent-color: #007acc;
+            --accent-hover: #0098e6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            padding: 0 20px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--pane-border);
+        }
+
+        .app-header .title {
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        .app-header .title span {
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .controls button {
+            background: transparent;
+            border: 1px solid var(--text-dark);
+            color: var(--text-light);
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .controls button:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .controls button svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        .pane {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        .editor-pane {
+            background-color: #2b2b2b;
+        }
+
+        .CodeMirror {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 16px;
+            height: 100%;
+        }
+        
+        .preview-pane {
+            background-color: white;
+            border-left: 2px solid var(--pane-border);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="title">HTML Pro <span>Editor</span></div>
+        <div class="controls">
+            <button id="import-btn">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 8h-2v4h-2l3 3 3-3h-2v-4z"></path></svg>
+                Importar
+            </button>
+            <input type="file" id="file-input" style="display: none;" accept=".html, .htm">
+            <button id="download-btn">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+                Descargar
+            </button>
+            <button id="copy-btn">
+                <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>
+                Copiar
+            </button>
+            <button id="clear-btn">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                Limpiar
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="pane editor-pane">
+            <textarea id="html-editor">
+<h1>✨ Crea algo increíble ✨</h1>
+<p>Escribe tu código HTML aquí y mira cómo la magia sucede en tiempo real.</p>
+
+<style>
+    body { 
+        font-family: 'Poppins', sans-serif; 
+        color: #333;
+        padding: 20px;
+        background: linear-gradient(45deg, #e6e9f0 0%, #eef1f5 100%);
+    }
+    h1 {
+        color: #007acc;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+</style>
+            </textarea>
+        </div>
+
+        <div class="pane preview-pane">
+            <iframe id="preview"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Configura el editor de CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('html-editor'), {
+            mode: 'xml',
+            theme: 'dracula',
+            lineNumbers: true,
+            autoCloseTags: true,
+            // Opciones para el autocompletado
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete',
+                'Ctrl-Q': function(cm){ editor.foldCode(cm.getCursor()); }
+            },
+            hintOptions: {
+                schemaInfo: CodeMirror.htmlSchema
+            }
+        });
+
+        // Selecciona los elementos del DOM
+        const copyBtn = document.getElementById('copy-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const importBtn = document.getElementById('import-btn');
+        const fileInput = document.getElementById('file-input');
+        const previewFrame = document.getElementById('preview');
+
+        // Función para actualizar la vista previa en tiempo real
+        function updatePreview() {
+            const code = editor.getValue();
+            previewFrame.srcdoc = code;
+        }
+
+        // Función para copiar el código al portapapeles
+        function copyCode() {
+            navigator.clipboard.writeText(editor.getValue()).then(() => {
+                copyBtn.innerHTML = '¡Copiado!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg> Copiar`;
+                }, 1500);
+            });
+        }
+        
+        // Función para limpiar el editor
+        function clearEditor() {
+            editor.setValue('');
+        }
+        
+        // Función para descargar el código como un archivo
+        function downloadCode() {
+            const code = editor.getValue();
+            const filename = 'mi-proyecto.html';
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Evento para abrir el selector de archivos
+        importBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Evento para leer el archivo seleccionado y cargarlo en el editor
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                editor.setValue(content);
+            };
+            reader.readAsText(file);
+        });
+
+        // Asigna los eventos a los botones
+        copyBtn.addEventListener('click', copyCode);
+        clearBtn.addEventListener('click', clearEditor);
+        downloadBtn.addEventListener('click', downloadCode);
+
+        // Actualiza la vista previa automáticamente al escribir
+        editor.on('change', updatePreview);
+        
+        // Ejecuta el código inicial al cargar la página
+        updatePreview();
+    </script>
+
+</body>
+</html>
